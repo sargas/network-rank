@@ -1,4 +1,16 @@
 #!/usr/bin/ruby
+#This program is free software: you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation, either version 3 of the License, or
+#(at your option) any later version.
+#
+#This program is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+#
+#You should have received a copy of the GNU General Public License
+#along with this program.  If not, see <http://www.gnu.org/licenses/>.
 require 'gnuplot'
 require 'optparse'
 
@@ -11,18 +23,22 @@ optparse = OptionParser.new do |opts|
 	Outputs to default gnuplot terminal (usually X11?) unless the '-p' option is specified
 eos
 	options[:total] = false
-	opts.on('-t', '--totals', 'Display Total Number of Networks on Same Axis') do
+	opts.on('-t', '--totals', 'Display total number of networks on same axis.') do
 		options[:total] = true
 	end
 	options[:png] = false
-	opts.on('-p', '--png [filename]', 'Outputs as PNG File (defaults to network-rank.png)') do|f|
+	opts.on('-p', '--png [filename]', 'Outputs as PNG File (defaults to network-rank.png).') do|f|
 		options[:png] = f || "network-rank.png"
 	end
 	options[:data] = "network-rank"
-	opts.on('-d','--data FILE', 'Use FILE instead of ./network-rank as input') do|f|
+	opts.on('-d','--data FILE', 'Use FILE instead of ./network-rank as input.') do|f|
 		options[:data] = f
 	end
-	opts.on_tail("-h","--help","Show this message") do
+	options[:curve] = "csplines"
+	opts.on('-c','--curve CURVETYPE', [:csplines,:bezier,:none],"Smoothing method in use (csplines, bezier, or none). Defaults to csplines.") do|s|
+		options[:curve] = (s == :none) ? false : s
+	end
+	opts.on_tail("-h","--help","Show this message.") do
 		puts opts
 		exit
 	end
@@ -87,7 +103,7 @@ Gnuplot.open do |gp|
 			# probably doesn't look good till we have more data
 			}, Gnuplot::DataSet.new([x,y]) { |ds|
 				ds.with = "lines"
-				ds.using = "1:2 smooth csplines"
+				ds.using = "1:2" + (options[:curve]? " smooth "+options[:curve].to_s: "")
 				ds.notitle unless options[:total]
 				ds.title = "IRC Ranking" if options[:total]
 			}
