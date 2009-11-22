@@ -17,7 +17,6 @@ require 'optparse'
 #command line processing
 options = {}
 optparse = OptionParser.new do |opts|
-	opts.banner = "Usage: network-rank.rb [options]"
 	opts.separator <<eos
 	Generates a graph of the data found in 'network-rank' file.
 	Outputs to default gnuplot terminal (usually X11?) unless the '-p' option is specified
@@ -43,12 +42,21 @@ eos
 		exit
 	end
 end
-optparse.parse!
+begin
+	optparse.parse!
+rescue OptionParser::ParseError => e
+	puts e
+	puts optparse
+	exit 1
+end
 
 # plotted variables
 x = Array.new
 y = Array.new
 tot = Array.new
+
+#just needs to be same b/w ruby and gnuplot
+timeformat = "%Y-%m-%d"
 
 # read data
 source = File.new(options[:data])
@@ -66,7 +74,7 @@ while line = source.gets
 		tot.push(thistot)
 	elsif line =~ /^..., (\d\d) (\w\w\w\w?) (\d\d\d\d)/
 		#puts "On month #{$2}, day #{$1} of year #{$3}"
-		x.push(Time.local($3,$2,$1).strftime("%Y-%m-%d"))
+		x.push(Time.local($3,$2,$1).strftime(timeformat))
 	end
 end
 
@@ -78,7 +86,7 @@ Gnuplot.open do |gp|
 
 		plot.xdata "time"
 		# need escaped quotes since gnuplot wants its own quotes
-		plot.timefmt "\"%Y-%m-%d\""
+		plot.timefmt "\"" + timeformat +"\""
 		plot.format "x \"%m/%d\""
 		plot.key "left top"
 
@@ -99,7 +107,7 @@ Gnuplot.open do |gp|
 				ds.with = "points"
 				ds.using = "1:2"
 				ds.notitle
-			# smoothened curve connecting them
+			# curve connecting them
 			# probably doesn't look good till we have more data
 			}, Gnuplot::DataSet.new([x,y]) { |ds|
 				ds.with = "lines"
