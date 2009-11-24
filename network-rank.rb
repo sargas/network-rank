@@ -19,7 +19,7 @@ options = {}
 optparse = OptionParser.new do |opts|
 	opts.separator <<eos
 	Generates a graph of the data found in 'network-rank' file.
-	Outputs to default gnuplot terminal (usually X11?) unless the '-p' option is specified
+	Will use default terminal, unless '-s' or '-p' are used to override this. Only one of these options may be used.
 eos
 	options[:total] = false
 	opts.on('-t', '--totals', 'Display total number of networks on same axis.') do
@@ -28,6 +28,10 @@ eos
 	options[:png] = false
 	opts.on('-p', '--png [filename]', 'Outputs as PNG File (defaults to network-rank.png).') do|f|
 		options[:png] = f || "network-rank.png"
+	end
+	options[:svg] = false
+	opts.on('-s', '--svg [filename]', 'Outputs as SVG File (defaults to network-rank.svg).') do|f|
+		options[:svg] = f || "network-rank.svg"
 	end
 	options[:data] = "network-rank"
 	opts.on('-d','--data FILE', 'Use FILE instead of ./network-rank as input.') do|f|
@@ -46,6 +50,11 @@ begin
 	optparse.parse!
 rescue OptionParser::ParseError => e
 	puts e
+	puts optparse
+	exit 1
+end
+if options[:svg] and options[:png]
+	puts "Please select only one of --svg and --png options."
 	puts optparse
 	exit 1
 end
@@ -99,6 +108,9 @@ Gnuplot.open do |gp|
 		if options[:png]
 			plot.terminal "png"
 			plot.output options[:png]
+		elsif options[:svg]
+			plot.terminal "svg"
+			plot.output options[:svg]
 		end
 	    
 		datasets = [
