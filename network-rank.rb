@@ -13,12 +13,13 @@
 #along with this program.  If not, see <http://www.gnu.org/licenses/>.
 require 'gnuplot'
 require 'optparse'
+require 'open-uri'
 
 #command line processing
 options = {}
 optparse = OptionParser.new do |opts|
 	opts.separator <<eos
-	Generates a graph of the data found in 'network-rank' file.
+	Generates a graph of the SearchIRC ranking scrapped on sahal's server, unless -d is specified.
 	Will use default terminal, unless '-s' or '-p' are used to override this. Only one of these options may be used.
 eos
 	options[:total] = false
@@ -33,8 +34,8 @@ eos
 	opts.on('-s', '--svg [filename]', 'Outputs as SVG File (defaults to network-rank.svg).') do|f|
 		options[:svg] = f || "network-rank.svg"
 	end
-	options[:data] = "network-rank"
-	opts.on('-d','--data FILE', 'Use FILE instead of ./network-rank as input.') do|f|
+	options[:data] = "http://sahal.neoturbine.net/~ircd/network-rank"
+	opts.on('-d','--data FILE', 'Use FILE (may be a URI) as input.') do|f|
 		options[:data] = f
 	end
 	options[:curve] = "csplines"
@@ -68,8 +69,7 @@ tot = Array.new
 timeformat = "%Y-%m-%d"
 
 # read data
-source = File.new(options[:data])
-while line = source.gets
+open(options[:data]).each {|line|
 	if line =~ /^([0-9]+) out of ([0-9,]+)$/
 		#puts "w00t! There is #{$1} out of #{$2}"
 		
@@ -85,7 +85,7 @@ while line = source.gets
 		#puts "On month #{$2}, day #{$1} of year #{$3}"
 		x.push(Time.local($3,$2,$1).strftime(timeformat))
 	end
-end
+}
 
 Gnuplot.open do |gp|
 	Gnuplot::Plot.new(gp) do |plot|
