@@ -14,13 +14,16 @@
 require 'gnuplot'
 require 'optparse'
 require 'open-uri'
+require 'rbconfig'
 
 #command line processing
 options = {}
 optparse = OptionParser.new do |opts|
 	opts.separator <<eos
 	Generates a graph of the SearchIRC ranking scrapped on sahal's server, unless -d is specified.
-	Will use default terminal, unless '-s' or '-p' are used to override this. Only one of these options may be used.
+	Will use default terminal, switching to dumb terminal if DISPLAY is not set and this is not Mac or Windows.
+	The options '-s' or '-p' are used to override this. Only one of these options may be used.
+
 eos
 	options[:total] = false
 	opts.on('-t', '--totals', 'Display total number of networks on same axis.') do
@@ -111,6 +114,8 @@ Gnuplot.open do |gp|
 		elsif options[:svg]
 			plot.terminal "svg"
 			plot.output options[:svg]
+		elsif (Config::CONFIG['host_os'].downcase =~ /mswin|mingw|darwin|mac/) or ENV['DISPLAY'].nil?
+			plot.terminal "dumb"
 		end
 	    
 		datasets = [
