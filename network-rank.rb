@@ -69,7 +69,7 @@ y = Array.new
 tot = Array.new
 
 #just needs to be same b/w ruby and gnuplot
-timeformat = "%Y-%m-%d"
+timeformat = "%s"
 
 # read data
 open(options[:data]).each {|line|
@@ -84,11 +84,13 @@ open(options[:data]).each {|line|
 		# times 100 since we are talking percentiles, not proportions
 		y.push((1 - thisrank / thistot)*100)
 		tot.push(thistot)
-	elsif line =~ /^..., (\d\d) (\w\w\w\w?) (\d\d\d\d)/
+	elsif line =~ /^..., (\d\d) (\w\w\w\w?) (\d\d\d\d) (\d\d):(\d\d):(\d\d)/
 		#puts "On month #{$2}, day #{$1} of year #{$3}"
-		x.push(Time.local($3,$2,$1).strftime(timeformat))
+		#time is $4 hours past midnight, $5 minutes, $6 seconds
+		x.push(Time.local($3,$2,$1,$4,$5,$6).strftime(timeformat))
 	end
 }
+puts x
 
 Gnuplot.open do |gp|
 	Gnuplot::Plot.new(gp) do |plot|
