@@ -72,6 +72,7 @@ tot = Array.new
 timeformat = "%s"
 
 # read data
+year = :none #detect year changes
 open(options[:data]).each {|line|
 	if line =~ /^([0-9]+) out of ([0-9,]+)$/
 		#puts "w00t! There is #{$1} out of #{$2}"
@@ -88,6 +89,12 @@ open(options[:data]).each {|line|
 		#puts "On month #{$2}, day #{$1} of year #{$3}"
 		#time is $4 hours past midnight, $5 minutes, $6 seconds
 		x.push(Time.local($3,$2,$1,$4,$5,$6).strftime(timeformat))
+		year = case year
+			when :none then $3
+			when :diff then :diff
+			when $3 then $3
+			else :diff
+		end
 	end
 }
 puts x
@@ -101,7 +108,11 @@ Gnuplot.open do |gp|
 		plot.xdata "time"
 		# need escaped quotes since gnuplot wants its own quotes
 		plot.timefmt "\"" + timeformat +"\""
-		plot.format "x \"%m/%d\""
+		if year == :diff
+			plot.format "x \"%b\\n%d\\n%Y\""
+		else
+			plot.format "x \"%m/%y\""
+		end
 		plot.key "left top"
 
 		if options[:total]
@@ -119,24 +130,24 @@ Gnuplot.open do |gp|
 		elsif (Config::CONFIG['host_os'].downcase =~ /mswin|mingw|darwin|mac/) or ENV['DISPLAY'].nil?
 			plot.terminal "dumb"
 		end
-	    
+
 		datasets = [
 			# data points themselves...
 			Gnuplot::DataSet.new([x,y]) { |ds|
-				ds.with = "points"
+				ds.with = "points lt rgb \"coral\""
 				ds.using = "1:2"
 				ds.notitle
 			# curve connecting them
 			# probably doesn't look good till we have more data
 			}, Gnuplot::DataSet.new([x,y]) { |ds|
-				ds.with = "lines"
+				ds.with = "lines lt rgb \"dark-turquoise\""
 				ds.using = "1:2" + (options[:curve]? " smooth "+options[:curve].to_s: "")
 				ds.notitle unless options[:total]
 				ds.title = "IRC Ranking" if options[:total]
 			}
 		]
 		datasets.push(Gnuplot::DataSet.new([x,tot]) { |ds|
-				ds.with = "linespoints"
+				ds.with = "linespoints lt rgb \"blue\""
 				ds.using = "1:2 axis x1y2"
 				ds.title = "Total # of IRC Networks"
 			}
