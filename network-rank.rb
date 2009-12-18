@@ -97,7 +97,6 @@ open(options[:data]).each {|line|
 		end
 	end
 }
-puts x
 
 Gnuplot.open do |gp|
 	Gnuplot::Plot.new(gp) do |plot|
@@ -111,7 +110,7 @@ Gnuplot.open do |gp|
 		if year == :diff
 			plot.format "x \"%b\\n%d\\n%Y\""
 		else
-			plot.format "x \"%m/%y\""
+			plot.format "x \"%m/%d\""
 		end
 		plot.key "left top"
 
