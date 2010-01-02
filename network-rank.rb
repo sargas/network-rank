@@ -73,7 +73,7 @@ timeformat = "%s"
 
 # read data
 year = :none #detect year changes
-open(options[:data]).each {|line|
+open(options[:data]).each do |line|
 	if line =~ /^([0-9]+) out of ([0-9,]+)$/
 		#puts "w00t! There is #{$1} out of #{$2}"
 		
@@ -96,7 +96,10 @@ open(options[:data]).each {|line|
 			else :diff
 		end
 	end
-}
+end
+
+# easy way to get rid of zeros: divide zero by zero
+tot = tot.map {|i| (i==0)?i/0:i }
 
 Gnuplot.open do |gp|
 	Gnuplot::Plot.new(gp) do |plot|
